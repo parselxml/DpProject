@@ -46,7 +46,7 @@ DjangoProject/
 ### 1. Клонирование проекта
 ```bash
 git clone https://github.com/parselxml/DpProject.git
-cd DjangoProject
+cd DpProject
 ```
 
 ### 2. Создание виртуального окружения

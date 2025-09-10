@@ -15,9 +15,11 @@ from rest_framework.views import APIView
 from ujson import loads as load_json
 from yaml import load as load_yaml, Loader
 
-from .models import Shop, Category, Product, ProductInfo, Parameter, ProductParameter, Order, OrderItem, \
+from .models import Shop, Category, Product, ProductInfo, Parameter, \
+    ProductParameter, Order, OrderItem, \
     Contact, ConfirmEmailToken
-from .serializers import UserSerializer, CategorySerializer, ShopSerializer, ProductInfoSerializer, \
+from .serializers import UserSerializer, CategorySerializer, ShopSerializer, \
+    ProductInfoSerializer, \
     OrderItemSerializer, OrderSerializer, ContactSerializer
 from .signals import order_created
 
@@ -32,7 +34,9 @@ class BaseAPIView(APIView):
         Проверка аутентификации пользователя
         """
         if not request.user.is_authenticated:
-            return JsonResponse({'Status': False, 'Error': 'Требуется авторизация'}, status=403)
+            return JsonResponse(
+                {'Status': False, 'Error': 'Требуется авторизация'},
+                status=403)
         return None
 
     def check_shop_permission(self, request):
@@ -44,7 +48,9 @@ class BaseAPIView(APIView):
             return auth_check
 
         if request.user.type != 'shop':
-            return JsonResponse({'Status': False, 'Error': 'Доступно только для магазинов'}, status=403)
+            return JsonResponse(
+            {'Status': False, 'Error': 'Доступно только для магазинов'},
+                status=403)
         return None
 
     def validate_required_fields(self, data, required_fields):
@@ -52,7 +58,8 @@ class BaseAPIView(APIView):
         Валидация обязательных полей
         """
         if not required_fields.issubset(data):
-            return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
+            return JsonResponse({'Status': False,
+                             'Errors': 'Не указаны все необходимые аргументы'})
         return None
 
 
@@ -66,18 +73,23 @@ class RegisterAccount(APIView):
         Обработка POST запроса для создания нового пользователя
         """
         # Проверяем наличие всех обязательных полей
-        required_fields = {'first_name', 'last_name', 'email', 'password', 'company', 'position'}
+        required_fields = {'first_name', 'last_name', 'email', 'password',
+                           'company', 'position'}
         if not required_fields.issubset(request.data):
-            return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
+            return JsonResponse({'Status': False,
+                             'Errors': 'Не указаны все необходимые аргументы'})
 
         # Валидация сложности пароля
         try:
             validate_password(request.data['password'])
         except ValidationError as password_error:
-            error_messages = [str(error) for error in password_error.error_list]
-            return JsonResponse({'Status': False, 'Errors': {'password': error_messages}})
+            error_messages = [str(error) for error in
+                              password_error.error_list]
+            return JsonResponse(
+                {'Status': False, 'Errors': {'password': error_messages}})
         except Exception as password_error:
-            return JsonResponse({'Status': False, 'Errors': {'password': [str(password_error)]}})
+            return JsonResponse({'Status': False, 'Errors': {
+                'password': [str(password_error)]}})
 
         # Проверяем и сохраняем данные пользователя
         user_serializer = UserSerializer(data=request.data)
@@ -87,7 +99,9 @@ class RegisterAccount(APIView):
             user.save()
             return JsonResponse({'Status': True})
         else:
-            return JsonResponse({'Status': False, 'Errors': user_serializer.errors})
+            return JsonResponse(
+                {'Status': False, 'Errors': user_serializer.errors})
+
 
 class ConfirmAccount(APIView):
     """
@@ -99,7 +113,8 @@ class ConfirmAccount(APIView):
         Подтверждение email через токен
         """
         if not {'email', 'token'}.issubset(request.data):
-            return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
+            return JsonResponse({'Status': False,
+                             'Errors': 'Не указаны все необходимые аргументы'})
 
         # Поиск и проверка токена подтверждения
         token = ConfirmEmailToken.objects.filter(
@@ -113,7 +128,8 @@ class ConfirmAccount(APIView):
             token.delete()
             return JsonResponse({'Status': True})
         else:
-            return JsonResponse({'Status': False, 'Errors': 'Неправильно указан токен или email'})
+            return JsonResponse({'Status': False,
+                             'Errors': 'Неправильно указан токен или email'})
 
 
 class AccountDetails(BaseAPIView):
@@ -134,20 +150,25 @@ class AccountDetails(BaseAPIView):
             try:
                 validate_password(request.data['password'])
             except ValidationError as password_error:
-                error_messages = [str(error) for error in password_error.error_list]
-                return JsonResponse({'Status': False, 'Errors': {'password': error_messages}})
+                error_messages = [str(error) for error in
+                                  password_error.error_list]
+                return JsonResponse(
+                    {'Status': False, 'Errors': {'password': error_messages}})
             except Exception as password_error:
-                return JsonResponse({'Status': False, 'Errors': {'password': [str(password_error)]}})
+                return JsonResponse({'Status': False, 'Errors': {
+                    'password': [str(password_error)]}})
             else:
                 request.user.set_password(request.data['password'])
 
         # Обновление остальных данных
-        user_serializer = UserSerializer(request.user, data=request.data, partial=True)
+        user_serializer = UserSerializer(request.user, data=request.data,
+                                         partial=True)
         if user_serializer.is_valid():
             user_serializer.save()
             return JsonResponse({'Status': True})
         else:
-            return JsonResponse({'Status': False, 'Errors': user_serializer.errors})
+            return JsonResponse(
+                {'Status': False, 'Errors': user_serializer.errors})
 
 
 class LoginAccount(APIView):
@@ -160,9 +181,11 @@ class LoginAccount(APIView):
         Аутентификация пользователя
         """
         if not {'email', 'password'}.issubset(request.data):
-            return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
+            return JsonResponse({'Status': False,
+                             'Errors': 'Не указаны все необходимые аргументы'})
 
-        user = authenticate(request, username=request.data['email'], password=request.data['password'])
+        user = authenticate(request, username=request.data['email'],
+                            password=request.data['password'])
 
         if user is not None and user.is_active:
             token, _ = Token.objects.get_or_create(user=user)
@@ -281,7 +304,8 @@ class BasketView(BaseAPIView):
             'ordered_items__product_info__product__category',
             'ordered_items__product_info__product_parameters__parameter'
         ).annotate(
-            total_sum=Sum(F('ordered_items__quantity') * F('ordered_items__product_info__price'))
+            total_sum=Sum(F('ordered_items__quantity') * F(
+                'ordered_items__product_info__price'))
         ).distinct()
 
         serializer = OrderSerializer(basket, many=True)
@@ -297,15 +321,18 @@ class BasketView(BaseAPIView):
 
         items_string = request.data.get('items')
         if not items_string:
-            return JsonResponse({'Status': False, 'Errors': 'Не указаны товары для добавления'})
+            return JsonResponse({'Status': False,
+                                 'Errors': 'Не указаны товары для добавления'})
 
         try:
             items_dict = load_json(items_string)
         except ValueError:
-            return JsonResponse({'Status': False, 'Errors': 'Неверный формат данных'})
+            return JsonResponse(
+                {'Status': False, 'Errors': 'Неверный формат данных'})
 
         # Получение или создание корзины
-        basket, _ = Order.objects.get_or_create(user_id=request.user.id, state='basket')
+        basket, _ = Order.objects.get_or_create(user_id=request.user.id,
+                                                state='basket')
         created_count = 0
 
         for item_data in items_dict:
@@ -317,11 +344,14 @@ class BasketView(BaseAPIView):
                     serializer.save()
                     created_count += 1
                 except IntegrityError as error:
-                    return JsonResponse({'Status': False, 'Errors': str(error)})
+                    return JsonResponse(
+                        {'Status': False, 'Errors': str(error)})
             else:
-                return JsonResponse({'Status': False, 'Errors': serializer.errors})
+                return JsonResponse(
+                    {'Status': False, 'Errors': serializer.errors})
 
-        return JsonResponse({'Status': True, 'Создано объектов': created_count})
+        return JsonResponse(
+            {'Status': True, 'Создано объектов': created_count})
 
     def delete(self, request, *args, **kwargs):
         """
@@ -339,10 +369,12 @@ class BasketView(BaseAPIView):
             items_string = request.data.get('items')
 
         if not items_string:
-            return JsonResponse({'Status': False, 'Errors': 'Не указаны товары для удаления'})
+            return JsonResponse(
+                {'Status': False, 'Errors': 'Не указаны товары для удаления'})
 
         items_list = items_string.split(',')
-        basket, _ = Order.objects.get_or_create(user_id=request.user.id, state='basket')
+        basket, _ = Order.objects.get_or_create(user_id=request.user.id,
+                                                state='basket')
 
         # Формирование условия для удаления
         delete_query = Q()
@@ -355,9 +387,11 @@ class BasketView(BaseAPIView):
 
         if valid_items:
             deleted_count = OrderItem.objects.filter(delete_query).delete()[0]
-            return JsonResponse({'Status': True, 'Удалено объектов': deleted_count})
+            return JsonResponse(
+                {'Status': True, 'Удалено объектов': deleted_count})
 
-        return JsonResponse({'Status': False, 'Errors': 'Неверный формат идентификаторов'})
+        return JsonResponse(
+            {'Status': False, 'Errors': 'Неверный формат идентификаторов'})
 
     def put(self, request, *args, **kwargs):
         """
@@ -369,14 +403,17 @@ class BasketView(BaseAPIView):
 
         items_string = request.data.get('items')
         if not items_string:
-            return JsonResponse({'Status': False, 'Errors': 'Не указаны товары для обновления'})
+            return JsonResponse({'Status': False,
+                                 'Errors': 'Не указаны товары для обновления'})
 
         try:
             items_dict = load_json(items_string)
         except ValueError:
-            return JsonResponse({'Status': False, 'Errors': 'Неверный формат данных'})
+            return JsonResponse(
+                {'Status': False, 'Errors': 'Неверный формат данных'})
 
-        basket, _ = Order.objects.get_or_create(user_id=request.user.id, state='basket')
+        basket, _ = Order.objects.get_or_create(user_id=request.user.id,
+                                                state='basket')
         updated_count = 0
 
         for item_data in items_dict:
@@ -386,7 +423,8 @@ class BasketView(BaseAPIView):
                     order_id=basket.id, id=item_data['id']
                 ).update(quantity=item_data['quantity'])
 
-        return JsonResponse({'Status': True, 'Обновлено объектов': updated_count})
+        return JsonResponse(
+            {'Status': True, 'Обновлено объектов': updated_count})
 
 
 class PartnerUpdate(BaseAPIView):
@@ -404,7 +442,8 @@ class PartnerUpdate(BaseAPIView):
 
         url = request.data.get('url')
         if not url:
-            return JsonResponse({'Status': False, 'Errors': 'Не указан URL прайс-листа'})
+            return JsonResponse(
+                {'Status': False, 'Errors': 'Не указан URL прайс-листа'})
 
         # Валидация URL
         validate_url = URLValidator()
@@ -453,8 +492,10 @@ class PartnerUpdate(BaseAPIView):
                 )
 
                 # Обработка параметров товара
-                for param_name, param_value in product_data['parameters'].items():
-                    parameter, _ = Parameter.objects.get_or_create(name=param_name)
+                for param_name, param_value in product_data[
+                    'parameters'].items():
+                    parameter, _ = Parameter.objects.get_or_create(
+                        name=param_name)
                     ProductParameter.objects.create(
                         product_info_id=product_info.id,
                         parameter_id=parameter.id,
@@ -494,11 +535,13 @@ class PartnerState(BaseAPIView):
 
         state = request.data.get('state')
         if state is None:
-            return JsonResponse({'Status': False, 'Errors': 'Не указан статус'})
+            return JsonResponse(
+                {'Status': False, 'Errors': 'Не указан статус'})
 
         try:
             bool_state = state.lower() in ('true', '1', 'yes', 'on')
-            Shop.objects.filter(user_id=request.user.id).update(state=bool_state)
+            Shop.objects.filter(user_id=request.user.id).update(
+                state=bool_state)
             return JsonResponse({'Status': True})
         except Exception as error:
             return JsonResponse({'Status': False, 'Errors': str(error)})
@@ -524,7 +567,8 @@ class PartnerOrders(BaseAPIView):
             'ordered_items__product_info__product__category',
             'ordered_items__product_info__product_parameters__parameter'
         ).select_related('contact').annotate(
-            total_sum=Sum(F('ordered_items__quantity') * F('ordered_items__product_info__price'))
+            total_sum=Sum(F('ordered_items__quantity') * F(
+                'ordered_items__product_info__price'))
         ).distinct()
 
         serializer = OrderSerializer(orders, many=True)
@@ -602,7 +646,8 @@ class ContactView(BaseAPIView):
 
         items_string = request.data.get('items')
         if not items_string:
-            return JsonResponse({'Status': False, 'Errors': 'Не указаны контакты для удаления'})
+            return JsonResponse({'Status': False,
+                                 'Errors': 'Не указаны контакты для удаления'})
 
         items_list = items_string.split(',')
         delete_query = Q()
@@ -615,9 +660,11 @@ class ContactView(BaseAPIView):
 
         if valid_items:
             deleted_count = Contact.objects.filter(delete_query).delete()[0]
-            return JsonResponse({'Status': True, 'Удалено объектов': deleted_count})
+            return JsonResponse(
+                {'Status': True, 'Удалено объектов': deleted_count})
 
-        return JsonResponse({'Status': False, 'Errors': 'Неверный формат идентификаторов'})
+        return JsonResponse(
+            {'Status': False, 'Errors': 'Неверный формат идентификаторов'})
 
     def put(self, request, *args, **kwargs):
         """
@@ -628,7 +675,8 @@ class ContactView(BaseAPIView):
             return auth_check
 
         if 'id' not in request.data or not request.data['id'].isdigit():
-            return JsonResponse({'Status': False, 'Errors': 'Не указан корректный ID контакта'})
+            return JsonResponse({'Status': False,
+                                 'Errors': 'Не указан корректный ID контакта'})
 
         contact = Contact.objects.filter(
             id=request.data['id'],
@@ -636,9 +684,11 @@ class ContactView(BaseAPIView):
         ).first()
 
         if not contact:
-            return JsonResponse({'Status': False, 'Errors': 'Контакт не найден'})
+            return JsonResponse(
+                {'Status': False, 'Errors': 'Контакт не найден'})
 
-        serializer = ContactSerializer(contact, data=request.data, partial=True)
+        serializer = ContactSerializer(contact, data=request.data,
+                                       partial=True)
         if serializer.is_valid():
             serializer.save()
             return JsonResponse({'Status': True})
@@ -665,7 +715,8 @@ class OrderView(BaseAPIView):
             'ordered_items__product_info__product__category',
             'ordered_items__product_info__product_parameters__parameter'
         ).select_related('contact').annotate(
-            total_sum=Sum(F('ordered_items__quantity') * F('ordered_items__product_info__price'))
+            total_sum=Sum(F('ordered_items__quantity') * F(
+                'ordered_items__product_info__price'))
         ).distinct()
 
         serializer = OrderSerializer(orders, many=True)
@@ -693,8 +744,10 @@ class OrderView(BaseAPIView):
 
             # Проверяем существование заказа и контакта
             try:
-                order = Order.objects.get(id=order_id, user_id=request.user.id, state='basket')
-                contact = Contact.objects.get(id=contact_id, user_id=request.user.id)
+                order = Order.objects.get(id=order_id, user_id=request.user.id,
+                                          state='basket')
+                contact = Contact.objects.get(id=contact_id,
+                                              user_id=request.user.id)
             except Order.DoesNotExist:
                 return JsonResponse({
                     'Status': False,
@@ -717,15 +770,15 @@ class OrderView(BaseAPIView):
             return JsonResponse({'Status': True})
 
         except IntegrityError as e:
-            print(f"❌ IntegrityError: {e}")
+            print(f" IntegrityError: {e}")
             return JsonResponse({
                 'Status': False,
                 'Errors': 'Ошибка базы данных'
             })
         except Exception as e:
-            print(f"❌ Unexpected error: {e}")
+            print(f" Unexpected error: {e}")
             import traceback
-            print(f"🔍 Traceback: {traceback.format_exc()}")
+            print(f" Traceback: {traceback.format_exc()}")
             return JsonResponse({
                 'Status': False,
                 'Errors': 'Внутренняя ошибка сервера'

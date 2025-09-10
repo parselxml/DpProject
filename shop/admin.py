@@ -3,7 +3,8 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
 
-from .models import User, Shop, Category, Product, ProductInfo, Parameter, ProductParameter, Order, OrderItem, Contact, \
+from .models import User, Shop, Category, Product, ProductInfo, Parameter, \
+    ProductParameter, Order, OrderItem, Contact, \
     ConfirmEmailToken
 
 
@@ -11,15 +12,19 @@ from .models import User, Shop, Category, Product, ProductInfo, Parameter, Produ
 class CustomUserAdmin(BaseUserAdmin):
     """Административная панель для управления пользователями"""
 
-    list_display = ('email', 'first_name', 'last_name', 'company', 'type', 'is_active')
+    list_display = ('email', 'first_name', 'last_name', 'company', 'type',
+                    'is_active')
     list_filter = ('type', 'is_active', 'is_staff')
     search_fields = ('email', 'first_name', 'last_name', 'company')
 
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        (_('Personal Info'), {'fields': ('first_name', 'last_name', 'company', 'position', 'type')}),
+        (_('Personal Info'), {
+            'fields': ('first_name', 'last_name', 'company', 'position',
+                       'type')}),
         (_('Permissions'), {
-            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
+            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups',
+                       'user_permissions'),
         }),
         (_('Important Dates'), {'fields': ('last_login', 'date_joined')}),
     )
@@ -27,7 +32,8 @@ class CustomUserAdmin(BaseUserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'password1', 'password2', 'first_name', 'last_name', 'company', 'position', 'type'),
+            'fields': ('email', 'password1', 'password2', 'first_name',
+                       'last_name', 'company', 'position', 'type'),
         }),
     )
 

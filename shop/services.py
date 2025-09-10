@@ -1,8 +1,9 @@
-
 import csv, json, io
 from typing import Iterable, Dict, Any
 from django.db import transaction
-from .models import Shop, Category, Product, ProductInfo, Parameter, ProductParameter
+from .models import Shop, Category, Product, ProductInfo, Parameter, \
+    ProductParameter
+
 
 class ProductImporter:
     def __init__(self, shop_name: str | None = None):
@@ -34,14 +35,16 @@ class ProductImporter:
             shop, _ = Shop.objects.get_or_create(name=shop_name)
             category, _ = Category.objects.get_or_create(name=category_name)
             category.shops.add(shop)
-            product, _ = Product.objects.get_or_create(name=product_name, category=category)
+            product, _ = Product.objects.get_or_create(name=product_name,
+                                                       category=category)
 
             info, created = ProductInfo.objects.get_or_create(
                 shop=shop, sku=row.get("sku"),
                 defaults={
                     "product": product,
                     "price": int(row.get("price", 0)),
-                    "price_rrc": int(row.get("price_rrc", row.get("price", 0))),
+                    "price_rrc": int(
+                        row.get("price_rrc", row.get("price", 0))),
                     "quantity": int(row.get("quantity", 0)),
                 }
             )
@@ -61,7 +64,8 @@ class ProductImporter:
             for pname, pvalue in params.items():
                 param, _ = Parameter.objects.get_or_create(name=pname)
                 ProductParameter.objects.update_or_create(
-                    product_info=info, parameter=param, defaults={{"value": str(pvalue)}}
+                    product_info=info, parameter=param,
+                    defaults={{"value": str(pvalue)}}
                 )
 
             created_count += 1
